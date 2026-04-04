@@ -28,7 +28,9 @@ namespace DestroyChecker.BlishModule
         private Dictionary<int, List<CollectionEntry>>? _collectionMapCache;
         private DateTime _collectionCacheExpiry = DateTime.MinValue;
         private readonly Dictionary<int, (bool Used, int Count)> _recipeCache = new Dictionary<int, (bool, int)>();
-        private static readonly TimeSpan CollectionCacheDuration = TimeSpan.FromMinutes(5);
+        private readonly Dictionary<int, ItemInfo> _itemDetailCache = new Dictionary<int, ItemInfo>();
+        private string? _lastInventoryHash;
+        private static readonly TimeSpan CollectionCacheDuration = TimeSpan.FromMinutes(10);
 
         public InventoryAnalyzer(Gw2ApiManager apiManager)
         {
@@ -73,10 +75,20 @@ namespace DestroyChecker.BlishModule
                 {
                     LastScannedCharacter = characterName;
                     LastResults = new List<ItemInfo>();
+                    _lastInventoryHash = null;
                     return LastResults;
                 }
 
-                // 2. Fetch item details
+                // 1b. Check if inventory changed since last scan
+                var inventoryHash = ComputeInventoryHash(slots);
+                if (inventoryHash == _lastInventoryHash && characterName == LastScannedCharacter && LastResults.Count > 0)
+                {
+                    Logger.Info("Inventory unchanged, skipping full analysis.");
+                    return LastResults;
+                }
+                _lastInventoryHash = inventoryHash;
+
+                // 2. Fetch item details (with cache)
                 var uniqueIds = slots.Select(s => s.ItemId).Distinct().ToList();
                 var itemDetails = await FetchItemDetailsAsync(uniqueIds);
 
@@ -160,14 +172,25 @@ namespace DestroyChecker.BlishModule
         {
             var result = new Dictionary<int, ItemInfo>();
 
-            foreach (var batch in Chunk(itemIds, 200))
+            // Return cached items and collect uncached IDs
+            var uncachedIds = new List<int>();
+            foreach (var id in itemIds)
+            {
+                if (_itemDetailCache.TryGetValue(id, out var cached))
+                    result[id] = CloneItemInfo(cached);
+                else
+                    uncachedIds.Add(id);
+            }
+
+            // Fetch only uncached items from API
+            foreach (var batch in Chunk(uncachedIds, 200))
             {
                 try
                 {
                     var items = await _apiManager.Gw2ApiClient.V2.Items.ManyAsync(batch);
                     foreach (var item in items)
                     {
-                        result[item.Id] = new ItemInfo
+                        var info = new ItemInfo
                         {
                             Id = item.Id,
                             Name = item.Name ?? $"Item #{item.Id}",
@@ -178,6 +201,8 @@ namespace DestroyChecker.BlishModule
                             Flags = item.Flags?.Select(f => f.ToString() ?? string.Empty).Where(f => f.Length > 0).ToList() ?? new List<string>(),
                             IconUrl = item.Icon.Url?.ToString()
                         };
+                        _itemDetailCache[item.Id] = info;
+                        result[item.Id] = CloneItemInfo(info);
                     }
                 }
                 catch (Exception ex)
@@ -187,6 +212,21 @@ namespace DestroyChecker.BlishModule
             }
 
             return result;
+        }
+
+        private static ItemInfo CloneItemInfo(ItemInfo source)
+        {
+            return new ItemInfo
+            {
+                Id = source.Id,
+                Name = source.Name,
+                Type = source.Type,
+                Rarity = source.Rarity,
+                VendorValue = source.VendorValue,
+                Description = source.Description,
+                Flags = new List<string>(source.Flags),
+                IconUrl = source.IconUrl
+            };
         }
 
         private async Task CheckRecipesAsync(List<ItemInfo> items)
@@ -325,6 +365,16 @@ namespace DestroyChecker.BlishModule
             {
                 Logger.Info($"Failed to load collections: {ex.Message}");
             }
+        }
+
+        private static string ComputeInventoryHash(List<InventorySlot> slots)
+        {
+            // Build a deterministic string from item IDs and counts
+            var sorted = slots.OrderBy(s => s.ItemId).ThenBy(s => s.Count);
+            var sb = new System.Text.StringBuilder();
+            foreach (var s in sorted)
+                sb.Append(s.ItemId).Append(':').Append(s.Count).Append(';');
+            return sb.ToString();
         }
 
         private static IEnumerable<List<T>> Chunk<T>(List<T> source, int chunkSize)
