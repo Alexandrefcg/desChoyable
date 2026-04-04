@@ -149,7 +149,15 @@ namespace DestroyChecker.Core.Services
                 return;
             }
 
-            // 13. Low rarity (Junk/Basic) — safe to destroy
+            // 13. Salvageable Item - Consider Salvaging instead
+            if (!item.IsNoSalvage)
+            {
+                item.Safety = ItemSafety.Check;
+                item.SafetyReason = $"Salvageable item - consider salvaging instead";
+                return;
+            }
+
+            // 14. Low rarity (Junk/Basic) — safe to destroy
             if (tier == RarityTier.Low)
             {
                 item.Safety = ItemSafety.Safe;
@@ -157,7 +165,7 @@ namespace DestroyChecker.Core.Services
                 return;
             }
 
-            // 14. Fine without special flags — safe
+            // 15. Fine without special flags — safe
             if (tier == RarityTier.Fine && !item.IsAccountBound && !item.IsNoSell && !item.IsUnique)
             {
                 item.Safety = ItemSafety.Safe;
