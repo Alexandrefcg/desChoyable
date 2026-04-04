@@ -1,0 +1,21 @@
+{
+  "name": "DesChoyable",
+  "version": "0.2.0",
+  "namespace": "bh.deschoyable",
+  "package": "DestroyChecker.BlishModule.dll",
+  "manifest_version": 1,
+  "description": "Your personal Choya inventory analyzer. Classifies Trophy/Gizmo items as safe to destroy, check first, or keep.",
+  "dependencies": {
+    "bh.blishhud": ">=1.2.0"
+  },
+  "url": "",
+  "contributors": [],
+  "directories": [],
+  "enabled_without_gw2": false,
+  "api_permissions": {
+    "account":      { "optional": false, "details": "Required to verify API key and fetch account achievements." },
+    "inventories":  { "optional": false, "details": "Required to read character inventory." },
+    "characters":   { "optional": false, "details": "Required to fetch character inventory data." },
+    "progression":  { "optional": false, "details": "Required to check collection completion status." }
+  }
+}
