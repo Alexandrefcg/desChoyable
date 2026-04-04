@@ -33,7 +33,9 @@ namespace DestroyChecker.BlishModule
         private double _scanTimer;
         private string? _lastCharacterName;
 
-        private const double ScanIntervalMs = 30_000;
+        private string? _lastResultsHash;
+
+        private const double ScanIntervalMs = 60_000;
         private const int WindowWidth = 580;
         private const int WindowHeight = 660;
 
@@ -136,6 +138,16 @@ namespace DestroyChecker.BlishModule
         {
             if (_contentPanel == null || _statusLabel == null) return;
 
+            // Build a hash to detect if results actually changed
+            var resultsHash = string.Join("|", items.Select(i => $"{i.Id}:{i.TotalCount}:{i.Safety}"));
+            if (resultsHash == _lastResultsHash)
+            {
+                _statusLabel.Text = $"Scanned: {_analyzer?.LastScannedCharacter}"
+                    + $" — {items.Count} items (no changes)";
+                return;
+            }
+            _lastResultsHash = resultsHash;
+
             // Clear existing content except status label
             var toRemove = _contentPanel.Children
                 .Where(c => c != _statusLabel)
@@ -163,6 +175,8 @@ namespace DestroyChecker.BlishModule
             CreateCategoryPanel("Do Not Destroy", keep, new Color(220, 80, 80));
         }
 
+        private const int IconSize = 32;
+
         private void CreateCategoryPanel(string title, List<ItemInfo> items, Color titleColor)
         {
             if (_contentPanel == null || items.Count == 0) return;
@@ -177,7 +191,7 @@ namespace DestroyChecker.BlishModule
                 ShowBorder = true,
                 Parent = _contentPanel,
                 OuterControlPadding = new Vector2(4, 4),
-                ControlPadding = new Vector2(0, 2),
+                ControlPadding = new Vector2(0, 4),
             };
 
             foreach (var item in items)
@@ -196,12 +210,34 @@ namespace DestroyChecker.BlishModule
                     detail += $" | Collection: {string.Join(", ", item.CollectionNames)} ({status})";
                 }
 
-                var itemPanel = new FlowPanel
+                // Row: icon on the left, text on the right
+                var rowPanel = new FlowPanel
+                {
+                    FlowDirection = ControlFlowDirection.SingleLeftToRight,
+                    WidthSizingMode = SizingMode.Fill,
+                    HeightSizingMode = SizingMode.AutoSize,
+                    Parent = section,
+                    ControlPadding = new Vector2(6, 0),
+                };
+
+                // Item icon
+                if (!string.IsNullOrEmpty(item.IconUrl))
+                {
+                    new Image
+                    {
+                        Texture = GameService.Content.GetRenderServiceTexture(item.IconUrl),
+                        Size = new Point(IconSize, IconSize),
+                        Parent = rowPanel,
+                    };
+                }
+
+                // Text column (name + detail stacked vertically)
+                var textPanel = new FlowPanel
                 {
                     FlowDirection = ControlFlowDirection.SingleTopToBottom,
                     WidthSizingMode = SizingMode.Fill,
                     HeightSizingMode = SizingMode.AutoSize,
-                    Parent = section,
+                    Parent = rowPanel,
                 };
 
                 new Label
@@ -211,7 +247,7 @@ namespace DestroyChecker.BlishModule
                     Font = GameService.Content.DefaultFont14,
                     AutoSizeHeight = true,
                     AutoSizeWidth = true,
-                    Parent = itemPanel
+                    Parent = textPanel
                 };
 
                 new Label
@@ -221,7 +257,7 @@ namespace DestroyChecker.BlishModule
                     Font = GameService.Content.DefaultFont12,
                     AutoSizeHeight = true,
                     AutoSizeWidth = true,
-                    Parent = itemPanel
+                    Parent = textPanel
                 };
             }
         }
