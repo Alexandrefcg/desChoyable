@@ -49,7 +49,26 @@ dotnet run
 
 Required API key permissions: `account`, `characters`, `inventories`, `progression`.
 
-### Blish HUD Module (Linux + Proton)
+### Blish HUD Module
+
+First, build the module from the source code. You will need the .NET SDK installed.
+
+```bash
+dotnet build
+```
+The compiled module will be located at: `src/DestroyChecker.BlishModule/bin/Debug/net48/DestroyChecker.BlishModule.bhm`
+
+#### Deployment (Windows)
+
+1. Copy the generated `DestroyChecker.BlishModule.bhm` file to your Blish HUD modules folder:
+   ```text
+   %userprofile%\Documents\Guild Wars 2\addons\blishhud\modules\
+   ```
+2. Launch Guild Wars 2 and Blish HUD.
+3. Enable **DesChoyable** in the Blish HUD module settings.
+4. In-game, click the DesChoyable corner icon (top-left, near the inventory icon). The module auto-scans the current character's inventory on load and every 30 seconds.
+
+#### Deployment (Linux + Proton)
 
 This setup uses **Gw2-Simple-Addon-Loader** to inject Blish HUD inside GW2 running on Steam via Proton.
 
@@ -58,42 +77,31 @@ This setup uses **Gw2-Simple-Addon-Loader** to inject Blish HUD inside GW2 runni
 - [Gw2-Simple-Addon-Loader](https://github.com/) configured in `addons/LOADER_public/`
 - `flatpak` with `protontricks` installed
 - Steam launch command set in GW2 properties:
-  ```
+  ```text
   "<SteamLibrary>/steamapps/common/Guild Wars 2/start_blish.sh" %command%
   ```
 
-**Build & Deploy:**
-
+**Manual Deploy:**
+Copy the generated `.bhm` file to the proton prefix module folder:
 ```bash
-# Set your Blish HUD modules folder (or export in your .bashrc):
-export BLISH_MODULES_DIR="<SteamLibrary>/steamapps/compatdata/1284210/pfx/drive_c/users/steamuser/Documents/Guild Wars 2/addons/blishhud/modules"
-
-# One-command build + deploy:
-chmod +x deploy.sh
-./deploy.sh
-
-# Or manually:
-dotnet build
 cp src/DestroyChecker.BlishModule/bin/Debug/net48/DestroyChecker.BlishModule.bhm \
   "<SteamLibrary>/steamapps/compatdata/1284210/pfx/drive_c/users/steamuser/Documents/Guild Wars 2/addons/blishhud/modules/"
 ```
 
-**Module location (Linux/Proton):**
-```
-<SteamLibrary>/steamapps/compatdata/1284210/pfx/drive_c/users/steamuser/Documents/Guild Wars 2/addons/blishhud/modules/
+**Deploy via Script:**
+You can also use the included deployment script for a one-command build + deploy:
+```bash
+# Set your Blish HUD modules folder (or export in your .bashrc):
+export BLISH_MODULES_DIR="<SteamLibrary>/steamapps/compatdata/1284210/pfx/drive_c/users/steamuser/Documents/Guild Wars 2/addons/blishhud/modules"
+
+chmod +x deploy.sh
+./deploy.sh
 ```
 
 **Testing:**
-1. Run `./deploy.sh` (builds and copies `.bhm` to modules folder)
-2. Launch GW2 via Steam (the `start_blish.sh` will start Blish HUD with the game)
-3. In-game, click the DesChoyable corner icon (top-left, near inventory icon)
-4. The module auto-scans the current character's inventory on load and every 30 seconds
-
-**Windows:**
-```
-%userprofile%\Documents\Guild Wars 2\addons\blishhud\modules\
-```
-Copy `DestroyChecker.BlishModule.bhm` there and enable the module in Blish HUD settings.
+1. Launch GW2 via Steam (the `start_blish.sh` will start Blish HUD with the game).
+2. Enable **DesChoyable** in the Blish HUD module settings.
+3. In-game, click the DesChoyable corner icon (top-left, near the inventory icon). The module auto-scans the current character's inventory on load and every 30 seconds.
 
 ## Classification Rules
 
