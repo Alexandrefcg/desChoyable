@@ -120,15 +120,7 @@ namespace DestroyChecker.Core.Services
                 return;
             }
 
-            // 9. Mid rarity without recipe — check
-            if (tier == RarityTier.Mid)
-            {
-                item.Safety = ItemSafety.Check;
-                item.SafetyReason = $"{item.Rarity} rarity with no recipe use — verify before destroying";
-                return;
-            }
-
-            // 10. AccountBound without NoSell — check
+            // 9. AccountBound without NoSell — check
             if (item.IsAccountBound && !item.IsNoSell && item.VendorValue >= 50)
             {
                 item.Safety = ItemSafety.Check;
@@ -136,7 +128,7 @@ namespace DestroyChecker.Core.Services
                 return;
             }
 
-            // 11. NoSell without AccountBound — check
+            // 10. NoSell without AccountBound — check
             if (item.IsNoSell && !item.IsAccountBound)
             {
                 item.Safety = ItemSafety.Check;
@@ -144,7 +136,7 @@ namespace DestroyChecker.Core.Services
                 return;
             }
 
-            // 12. High vendor value — consider selling instead
+            // 11. High vendor value — consider selling instead
             if (item.VendorValue > 100 && !item.IsNoSell)
             {
                 item.Safety = ItemSafety.Check;
@@ -152,7 +144,7 @@ namespace DestroyChecker.Core.Services
                 return;
             }
 
-            // 13. Salvageable Item - Consider Salvaging instead
+            // 12. Salvageable Item - Consider Salvaging instead
             if (!item.IsNoSalvage)
             {
                 item.Safety = ItemSafety.Check;
@@ -160,7 +152,7 @@ namespace DestroyChecker.Core.Services
                 return;
             }
 
-            // 14. Junk Items - Consider Sellling
+            // 13. Junk Items - Consider Sellling
             if (tier == RarityTier.Junk)
             {
                 item.Safety = ItemSafety.Check;
@@ -168,15 +160,15 @@ namespace DestroyChecker.Core.Services
                 return;
             }
 
-            // 15. Low rarity (Basic) — safe to destroy
-            if (tier == RarityTier.Low)
+            // 14. Low rarity (Basic) — safe to destroy
+            if (tier == RarityTier.Low || tier == RarityTier.Mid && item.VendorValue <= 49)
             {
                 item.Safety = ItemSafety.Safe;
                 item.SafetyReason = $"Generic {item.Rarity} trophy — safe to destroy";
                 return;
             }
 
-            // 16. Fine without special flags — safe
+            // 15. Fine without special flags — safe
             if (tier == RarityTier.Fine && !item.IsAccountBound && !item.IsNoSell && !item.IsUnique)
             {
                 item.Safety = ItemSafety.Safe;
