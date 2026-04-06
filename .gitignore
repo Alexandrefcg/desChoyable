@@ -36,4 +36,5 @@ desktop.ini
 
 # User-specific
 *.env
+.env
 launchSettings.json

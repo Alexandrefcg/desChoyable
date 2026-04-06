@@ -1,4 +1,6 @@
-﻿using DestroyChecker.Core.Models;
+﻿using System.Text.Json;
+using System.Text.Json.Serialization;
+using DestroyChecker.Core.Models;
 using DestroyChecker.Core.Services;
 using DestroyChecker.ConsoleTest.Services;
 
@@ -210,6 +212,41 @@ Console.ForegroundColor = ConsoleColor.Yellow;
 Console.WriteLine($"  🟡 Check first:        {stats[ItemSafety.Check]}");
 Console.ForegroundColor = ConsoleColor.Red;
 Console.WriteLine($"  🔴 Do not destroy:     {stats[ItemSafety.Keep]}");
+Console.ResetColor();
+
+// 11. Export JSON for validation
+var jsonOutput = analyzableItems
+    .OrderBy(i => i.Safety)
+    .ThenBy(i => i.Name)
+    .Select(i => new
+    {
+        i.Id,
+        i.Name,
+        i.Type,
+        i.Rarity,
+        Safety = i.Safety.ToString(),
+        i.SafetyReason,
+        i.TotalCount,
+        i.VendorValue,
+        i.UsedInRecipes,
+        i.RecipeCount,
+        i.BelongsToCollection,
+        CollectionNames = i.CollectionNames.Count > 0 ? i.CollectionNames : null,
+        i.AllCollectionsCompleted,
+        i.FoundOnCharacters,
+    });
+
+var jsonOptions = new JsonSerializerOptions
+{
+    WriteIndented = true,
+    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+};
+var json = JsonSerializer.Serialize(jsonOutput, jsonOptions);
+var jsonPath = Path.Combine(AppContext.BaseDirectory, "analysis-results.json");
+File.WriteAllText(jsonPath, json);
+Console.WriteLine();
+Console.ForegroundColor = ConsoleColor.Cyan;
+Console.WriteLine($"JSON results exported to: {jsonPath}");
 Console.ResetColor();
 
 return 0;
