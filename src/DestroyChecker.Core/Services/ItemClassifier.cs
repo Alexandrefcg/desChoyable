@@ -160,7 +160,7 @@ namespace DestroyChecker.Core.Services
                 return;
             }
 
-            // NEW LINE 
+            // 14. Junk Items - Consider Sellling
             if (tier == RarityTier.Junk)
             {
                 item.Safety = ItemSafety.Check;
@@ -168,7 +168,7 @@ namespace DestroyChecker.Core.Services
                 return;
             }
 
-            // 14. Low rarity (Basic) — safe to destroy
+            // 15. Low rarity (Basic) — safe to destroy
             if (tier == RarityTier.Low)
             {
                 item.Safety = ItemSafety.Safe;
@@ -176,7 +176,7 @@ namespace DestroyChecker.Core.Services
                 return;
             }
 
-            // 15. Fine without special flags — safe
+            // 16. Fine without special flags — safe
             if (tier == RarityTier.Fine && !item.IsAccountBound && !item.IsNoSell && !item.IsUnique)
             {
                 item.Safety = ItemSafety.Safe;
