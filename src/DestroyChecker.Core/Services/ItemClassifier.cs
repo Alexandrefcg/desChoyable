@@ -68,7 +68,17 @@ namespace DestroyChecker.Core.Services
                 return;
             }
 
-            // 3. Incomplete collection — keep
+            // 3. Used in crafting recipes — keep (checked before collections)
+            if (item.UsedInRecipes)
+            {
+                item.Safety = ItemSafety.Keep;
+                item.SafetyReason = $"Used in {item.RecipeCount} crafting recipe(s)";
+                if (item.BelongsToCollection)
+                    item.SafetyReason += $" | Collection: {string.Join(", ", item.CollectionNames)}";
+                return;
+            }
+
+            // 4. Incomplete collection — keep
             if (item.BelongsToCollection && !item.AllCollectionsCompleted)
             {
                 item.Safety = ItemSafety.Keep;
@@ -77,7 +87,7 @@ namespace DestroyChecker.Core.Services
                 return;
             }
 
-            // 4. Completed collection — safe to destroy
+            // 5. Completed collection — safe to destroy
             if (item.BelongsToCollection && item.AllCollectionsCompleted)
             {
                 item.Safety = ItemSafety.Safe;
@@ -85,19 +95,11 @@ namespace DestroyChecker.Core.Services
                 return;
             }
 
-            // 5. High rarity — keep
+            // 6. High rarity — keep
             if (tier == RarityTier.High)
             {
                 item.Safety = ItemSafety.Keep;
                 item.SafetyReason = $"{item.Rarity} rarity — valuable item";
-                return;
-            }
-
-            // 6. Used in crafting recipes — keep
-            if (item.UsedInRecipes)
-            {
-                item.Safety = ItemSafety.Keep;
-                item.SafetyReason = $"Used in {item.RecipeCount} crafting recipe(s)";
                 return;
             }
 
