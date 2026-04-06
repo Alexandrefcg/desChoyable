@@ -8,13 +8,14 @@ namespace DestroyChecker.Core.Services
 {
     public class ItemClassifier
     {
-        private enum RarityTier { Low, Fine, Mid, High, Unknown }
+        private enum RarityTier { Junk, Low, Fine, Mid, High, Unknown }
 
         private static RarityTier GetRarityTier(string rarity)
         {
             switch (rarity?.ToLowerInvariant())
             {
                 case "junk":
+                    return RarityTier.Junk;
                 case "basic":
                     return RarityTier.Low;
                 case "fine":
@@ -77,8 +78,8 @@ namespace DestroyChecker.Core.Services
                 return;
             }
 
-            // 4. Completed collection — safe to destroy
-            if (item.BelongsToCollection && item.AllCollectionsCompleted)
+            // 4. Completed collection not — safe to destroy
+            if (item.BelongsToCollection && item.AllCollectionsCompleted && tier != RarityTier.Junk)
             {
                 item.Safety = ItemSafety.Safe;
                 item.SafetyReason = $"Collection completed: {string.Join(", ", item.CollectionNames)}";
@@ -157,7 +158,15 @@ namespace DestroyChecker.Core.Services
                 return;
             }
 
-            // 14. Low rarity (Junk/Basic) — safe to destroy
+            // NEW LINE 
+            if (tier == RarityTier.Junk)
+            {
+                item.Safety = ItemSafety.Check;
+                item.SafetyReason = $"{item.Rarity} item - consider selling to Merchant with 'Sell Junk'";
+                return;
+            }
+
+            // 14. Low rarity (Basic) — safe to destroy
             if (tier == RarityTier.Low)
             {
                 item.Safety = ItemSafety.Safe;
