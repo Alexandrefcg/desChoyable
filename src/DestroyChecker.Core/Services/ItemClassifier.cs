@@ -68,10 +68,10 @@ namespace DestroyChecker.Core.Services
                 return;
             }
 
-            // 3. Incomplete collection — keep
+            // 3. Incomplete collection — check
             if (item.BelongsToCollection && !item.AllCollectionsCompleted)
             {
-                item.Safety = ItemSafety.Keep;
+                item.Safety = ItemSafety.Check;
                 item.SafetyReason = $"Part of incomplete collection: {string.Join(", ", item.CollectionNames)}"
                     + (item.CollectionProgress != null ? $" ({item.CollectionProgress})" : "");
                 return;
@@ -126,7 +126,7 @@ namespace DestroyChecker.Core.Services
             }
 
             // 10. AccountBound without NoSell — check
-            if (item.IsAccountBound && !item.IsNoSell)
+            if (item.IsAccountBound && !item.IsNoSell && item.VendorValue >= 50)
             {
                 item.Safety = ItemSafety.Check;
                 item.SafetyReason = "AccountBound but sellable — check vendor value";
