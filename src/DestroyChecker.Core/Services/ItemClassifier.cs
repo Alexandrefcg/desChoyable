@@ -82,7 +82,7 @@ namespace DestroyChecker.Core.Services
             // 4. Incomplete collection — keep
             if (item.BelongsToCollection && !item.AllCollectionsCompleted)
             {
-                item.Safety = ItemSafety.Check;
+                item.Safety = ItemSafety.Keep;
                 item.SafetyReason = $"Part of incomplete collection: {string.Join(", ", item.CollectionNames)}"
                     + (item.CollectionProgress != null ? $" ({item.CollectionProgress})" : "");
                 return;
