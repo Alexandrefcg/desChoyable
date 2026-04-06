@@ -8,13 +8,14 @@ namespace DestroyChecker.Core.Services
 {
     public class ItemClassifier
     {
-        private enum RarityTier { Low, Fine, Mid, High, Unknown }
+        private enum RarityTier { Junk, Low, Fine, Mid, High, Unknown }
 
         private static RarityTier GetRarityTier(string rarity)
         {
             switch (rarity?.ToLowerInvariant())
             {
                 case "junk":
+                    return RarityTier.Junk;
                 case "basic":
                     return RarityTier.Low;
                 case "fine":
@@ -87,8 +88,8 @@ namespace DestroyChecker.Core.Services
                 return;
             }
 
-            // 5. Completed collection — safe to destroy
-            if (item.BelongsToCollection && item.AllCollectionsCompleted)
+            // 4. Completed collection — safe to destroy
+            if (item.BelongsToCollection && item.AllCollectionsCompleted && tier != RarityTier.Junk)
             {
                 item.Safety = ItemSafety.Safe;
                 item.SafetyReason = $"Collection completed: {string.Join(", ", item.CollectionNames)}";
@@ -128,7 +129,7 @@ namespace DestroyChecker.Core.Services
             }
 
             // 10. AccountBound without NoSell — check
-            if (item.IsAccountBound && !item.IsNoSell)
+            if (item.IsAccountBound && !item.IsNoSell && item.VendorValue >= 50)
             {
                 item.Safety = ItemSafety.Check;
                 item.SafetyReason = "AccountBound but sellable — check vendor value";
@@ -159,7 +160,15 @@ namespace DestroyChecker.Core.Services
                 return;
             }
 
-            // 14. Low rarity (Junk/Basic) — safe to destroy
+            // 14. Junk Items - Consider Sellling
+            if (tier == RarityTier.Junk)
+            {
+                item.Safety = ItemSafety.Check;
+                item.SafetyReason = $"{item.Rarity} item - consider selling to Merchant with 'Sell Junk'";
+                return;
+            }
+
+            // 15. Low rarity (Basic) — safe to destroy
             if (tier == RarityTier.Low)
             {
                 item.Safety = ItemSafety.Safe;
@@ -167,7 +176,7 @@ namespace DestroyChecker.Core.Services
                 return;
             }
 
-            // 15. Fine without special flags — safe
+            // 16. Fine without special flags — safe
             if (tier == RarityTier.Fine && !item.IsAccountBound && !item.IsNoSell && !item.IsUnique)
             {
                 item.Safety = ItemSafety.Safe;
